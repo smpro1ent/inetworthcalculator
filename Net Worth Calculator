@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Net Worth Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E2C97E;
+    --gold-dark: #9A7A2E;
+    --gold-pale: #F5EDD8;
+    --black: #0A0A0A;
+    --black-soft: #111111;
+    --charcoal: #1E1E1E;
+    --white: #FFFFFF;
+    --off-white: #F8F6F1;
+    --gray-light: #E8E4DC;
+    --gray-mid: #B8B0A0;
+    --gray-dark: #5A5550;
+    --positive: #2D7A4F;
+    --negative: #8B2020;
+    --shadow-gold: rgba(201,168,76,0.15);
+    --shadow-black: rgba(0,0,0,0.25);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--off-white);
+    color: var(--black);
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--black);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--gold);
+  }
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+  .logo span { color: var(--gold); }
+  .logo-sub {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    color: var(--gray-mid);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .header-date {
+    font-size: 11px;
+    color: var(--gray-mid);
+    letter-spacing: 1px;
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px;
+  }
+
+  /* ── Summary Banner ── */
+  .summary-banner {
+    background: var(--black);
+    border: 1px solid var(--gold-dark);
+    border-radius: 4px;
+    padding: 36px 48px;
+    margin-bottom: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-banner::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .summary-banner::after {
+    content: 'NET WORTH';
+    position: absolute;
+    right: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 120px;
+    font-weight: 700;
+    color: rgba(201,168,76,0.04);
+    letter-spacing: 8px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .summary-item { text-align: center; }
+  .summary-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .summary-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1;
+  }
+  .summary-value.positive { color: var(--gold-light); }
+  .summary-value.negative { color: #E07070; }
+  .summary-divider {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--gold-dark), transparent);
+  }
+
+  /* ── Progress Ratio ── */
+  .ratio-bar-wrap { flex: 1; max-width: 280px; }
+  .ratio-label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+  }
+  .ratio-track {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .ratio-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+  .ratio-pct {
+    text-align: center;
+    font-size: 10px;
+    color: var(--gold);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  /* ── Section Card ── */
+  .section-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px var(--shadow-black);
+  }
+  .section-header {
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gray-light);
+  }
+  .section-header.assets { background: var(--black); }
+  .section-header.liabilities { background: var(--charcoal); }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-icon { font-size: 16px; }
+  .section-total {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gold);
+  }
+  .section-body { padding: 24px; }
+
+  /* ── Category Group ── */
+  .category { margin-bottom: 20px; }
+  .category-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray-dark);
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--gold-pale);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .category-subtotal {
+    font-weight: 600;
+    color: var(--gold-dark);
+    font-size: 10px;
+  }
+
+  /* ── Row ── */
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    animation: rowIn 0.25s ease;
+  }
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .row-name {
+    flex: 1;
+    border: 1px solid var(--gray-light);
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: 'Montserrat', sans-serif;
+    color: var(--black);
+    background: var(--off-white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .row-name:focus { border-color: var(--gold); background: var(--white); }
+  .row-amount {
+    width: 160px;
+    border: 1px solid var(--gray-light);
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: 'Montserrat', sans-serif;
+    color: var(--black);
+    background: var(--off-white);
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: right;
+  }
+  .row-amount:focus { border-color: var(--gold); background: var(--white); }
+  .btn-delete {
+    background: none;
+    border: 1px solid var(--gray-light);
+    border-radius: 3px;
+    width: 30px; height: 30px;
+    cursor: pointer;
+    color: var(--gray-dark);
+    font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-delete:hover { border-color: #c0392b; color: #c0392b; background: #fff5f5; }
+
+  /* ── Add Row Button ── */
+  .btn-add {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px dashed var(--gold-dark);
+    border-radius: 3px;
+    padding: 7px 14px;
+    color: var(--gold-dark);
+    font-size: 11px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+  }
+  .btn-add:hover { background: var(--gold-pale); border-color: var(--gold); color: var(--gold-dark); }
+
+  /* ── Actions ── */
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    border: none;
+    border-radius: 3px;
+    padding: 12px 28px;
+    color: var(--black);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px var(--shadow-gold);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 3px;
+    padding: 12px 28px;
+    color: var(--gray-dark);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold-dark); }
+
+  /* ── Charts Section ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  .chart-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 24px;
+    box-shadow: 0 2px 16px var(--shadow-black);
+  }
+  .chart-title {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray-dark);
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .donut-wrap { display: flex; flex-direction: column; align-items: center; }
+  svg.donut { overflow: visible; }
+
+  /* ── Breakdown bars ── */
+  .breakdown-item { margin-bottom: 10px; }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 3px;
+    color: var(--black);
+  }
+  .breakdown-pct { color: var(--gray-dark); font-size: 10px; }
+  .breakdown-track {
+    height: 4px;
+    background: var(--gray-light);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .breakdown-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── Milestones ── */
+  .milestones-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 16px var(--shadow-black);
+  }
+  .milestone-title {
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray-dark);
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .milestones-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .milestone-item {
+    text-align: center;
+    padding: 14px 8px;
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .milestone-item.achieved {
+    border-color: var(--gold);
+    background: var(--gold-pale);
+  }
+  .milestone-item.achieved::after {
+    content: '✓';
+    position: absolute;
+    top: 6px; right: 8px;
+    color: var(--gold-dark);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .milestone-icon { font-size: 22px; margin-bottom: 6px; }
+  .milestone-name {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gray-dark);
+    font-weight: 600;
+  }
+  .milestone-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    color: var(--gold-dark);
+    margin-top: 2px;
+  }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--black);
+    border-top: 1px solid var(--gold-dark);
+    padding: 16px 32px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--gray-dark);
+    letter-spacing: 2px;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 32px; right: 32px;
+    background: var(--black);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 14px 24px;
+    color: var(--white);
+    font-size: 12px;
+    letter-spacing: 1px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+    z-index: 999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── Utility ── */
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type=number] { -moz-appearance: textfield; }
+  .gold-accent { color: var(--gold); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .milestones-grid { grid-template-columns: repeat(3, 1fr); }
+    .summary-banner { flex-direction: column; text-align: center; }
+    .summary-divider { width: 60px; height: 1px; }
+    .summary-banner::after { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="logo">Wealth<span>Ledger</span></div>
+      <div class="logo-sub">Personal Net Worth Calculator</div>
+    </div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Summary Banner -->
+  <div class="summary-banner" id="summaryBanner">
+    <div class="summary-item">
+      <div class="summary-label">Total Assets</div>
+      <div class="summary-value positive" id="bannerAssets">$0</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <div class="summary-label">Total Liabilities</div>
+      <div class="summary-value" id="bannerLiabilities" style="color:#E07070">$0</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-item">
+      <div class="summary-label">Net Worth</div>
+      <div class="summary-value positive" id="bannerNetWorth">$0</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="ratio-bar-wrap">
+      <div class="summary-label" style="text-align:center;color:var(--gray-mid);font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Asset-to-Debt Ratio</div>
+      <div class="ratio-track">
+        <div class="ratio-fill" id="ratioFill" style="width:0%"></div>
+      </div>
+      <div class="ratio-pct" id="ratioPct">— : —</div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn-primary" onclick="downloadPDF()">⬇ Download PDF Report</button>
+    <button class="btn-secondary" onclick="clearAll()">Clear All</button>
+    <button class="btn-secondary" onclick="loadSample()">Load Sample Data</button>
+  </div>
+
+  <!-- Assets & Liabilities Grid -->
+  <div class="grid">
+    <!-- ASSETS -->
+    <div class="section-card">
+      <div class="section-header assets">
+        <div class="section-title"><span class="section-icon">📈</span> Assets</div>
+        <div class="section-total" id="totalAssetsHeader">$0</div>
+      </div>
+      <div class="section-body" id="assetsBody">
+        <!-- Categories generated by JS -->
+      </div>
+    </div>
+
+    <!-- LIABILITIES -->
+    <div class="section-card">
+      <div class="section-header liabilities">
+        <div class="section-title"><span class="section-icon">📉</span> Liabilities</div>
+        <div class="section-total" id="totalLiabilitiesHeader">$0</div>
+      </div>
+      <div class="section-body" id="liabilitiesBody">
+        <!-- Categories generated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Net Worth Composition</div>
+      <div class="donut-wrap">
+        <svg class="donut" width="160" height="160" viewBox="0 0 160 160" id="donutSvg">
+          <circle cx="80" cy="80" r="60" fill="none" stroke="#E8E4DC" stroke-width="22"/>
+          <circle cx="80" cy="80" r="60" fill="none" stroke="url(#goldGrad)" stroke-width="22"
+            stroke-dasharray="0 377" stroke-dashoffset="94.25" id="donutAssets"
+            transform="rotate(-90 80 80)" style="transition:stroke-dasharray 0.6s ease"/>
+          <circle cx="80" cy="80" r="60" fill="none" stroke="#8B2020" stroke-width="22"
+            stroke-dasharray="0 377" stroke-dashoffset="94.25" id="donutLiabilities"
+            transform="rotate(-90 80 80)" style="transition:stroke-dasharray 0.6s ease; opacity:0.7"/>
+          <defs>
+            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#9A7A2E"/>
+              <stop offset="100%" stop-color="#E2C97E"/>
+            </linearGradient>
+          </defs>
+          <text x="80" y="74" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="11" fill="#5A5550" letter-spacing="1">RATIO</text>
+          <text x="80" y="92" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="18" font-weight="600" fill="#0A0A0A" id="donutPct">—</text>
+        </svg>
+        <div style="display:flex;gap:16px;margin-top:12px">
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--gray-dark)">
+            <div style="width:10px;height:10px;border-radius:2px;background:linear-gradient(135deg,#9A7A2E,#E2C97E)"></div> Assets
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--gray-dark)">
+            <div style="width:10px;height:10px;border-radius:2px;background:#8B2020;opacity:0.7"></div> Liabilities
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Asset Breakdown</div>
+      <div id="assetBreakdown"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Liability Breakdown</div>
+      <div id="liabilityBreakdown"></div>
+    </div>
+  </div>
+
+  <!-- Milestones -->
+  <div class="milestones-card">
+    <div class="milestone-title">Wealth Milestones</div>
+    <div class="milestones-grid" id="milestonesGrid"></div>
+  </div>
+
+</div>
+
+<footer>WEALTHLEDGER &nbsp;·&nbsp; CONFIDENTIAL FINANCIAL REPORT &nbsp;·&nbsp; FOR PERSONAL USE ONLY</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA MODEL ──────────────────────────────────────────────────────────────
+const ASSET_CATS = [
+  { id: 'cash',     label: 'Cash & Equivalents',    color: '#2D7A4F' },
+  { id: 'invest',   label: 'Investments & Stocks',   color: '#C9A84C' },
+  { id: 'realty',   label: 'Real Estate',            color: '#9A7A2E' },
+  { id: 'retire',   label: 'Retirement Accounts',    color: '#6B8E7F' },
+  { id: 'vehicles', label: 'Vehicles',               color: '#8C7B6E' },
+  { id: 'personal', label: 'Personal Property',      color: '#A0956A' },
+  { id: 'biz',      label: 'Business Interests',     color: '#5A7A8A' },
+  { id: 'other_a',  label: 'Other Assets',           color: '#B0A090' },
+];
+const LIAB_CATS = [
+  { id: 'mortgage', label: 'Mortgage(s)',            color: '#8B2020' },
+  { id: 'auto',     label: 'Auto Loans',             color: '#C0392B' },
+  { id: 'student',  label: 'Student Loans',          color: '#A04030' },
+  { id: 'cards',    label: 'Credit Cards',           color: '#D45050' },
+  { id: 'personal_l',label:'Personal Loans',         color: '#B03040' },
+  { id: 'medical',  label: 'Medical Debt',           color: '#905050' },
+  { id: 'tax',      label: 'Tax Liabilities',        color: '#784040' },
+  { id: 'other_l',  label: 'Other Liabilities',      color: '#C08080' },
+];
+
+let assetRows = {}; // { catId: [{id, name, value}] }
+let liabRows  = {};
+
+ASSET_CATS.forEach(c => assetRows[c.id] = []);
+LIAB_CATS.forEach(c => liabRows[c.id] = []);
+
+let rowCounter = 0;
+const newId = () => ++rowCounter;
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderSection(cats, rowsObj, bodyId, type) {
+  const body = document.getElementById(bodyId);
+  body.innerHTML = '';
+  cats.forEach(cat => {
+    const rows = rowsObj[cat.id];
+    const catDiv = document.createElement('div');
+    catDiv.className = 'category';
+
+    const subtotal = rows.reduce((s,r) => s + (parseFloat(r.value)||0), 0);
+    catDiv.innerHTML = `
+      <div class="category-label">
+        <span>${cat.label}</span>
+        <span class="category-subtotal">${fmt(subtotal)}</span>
+      </div>
+      <div class="cat-rows" id="catrows-${type}-${cat.id}"></div>
+      <button class="btn-add" onclick="addRow('${type}','${cat.id}')">+ Add Item</button>
+    `;
+    body.appendChild(catDiv);
+
+    const catRows = catDiv.querySelector(`#catrows-${type}-${cat.id}`);
+    rows.forEach(row => {
+      const div = document.createElement('div');
+      div.className = 'row';
+      div.id = `row-${row.id}`;
+      div.innerHTML = `
+        <input class="row-name" type="text" placeholder="Description" value="${esc(row.name)}"
+          oninput="updateRow('${type}','${cat.id}',${row.id},'name',this.value)">
+        <input class="row-amount" type="number" min="0" placeholder="0.00" value="${row.value||''}"
+          oninput="updateRow('${type}','${cat.id}',${row.id},'value',this.value)">
+        <button class="btn-delete" onclick="deleteRow('${type}','${cat.id}',${row.id})" title="Remove">×</button>
+      `;
+      catRows.appendChild(div);
+    });
+  });
+}
+
+function renderAll() {
+  renderSection(ASSET_CATS, assetRows, 'assetsBody', 'asset');
+  renderSection(LIAB_CATS,  liabRows,  'liabilitiesBody', 'liab');
+  updateSummary();
+}
+
+// ─── ROW CRUD ─────────────────────────────────────────────────────────────────
+function addRow(type, catId) {
+  const rows = type === 'asset' ? assetRows : liabRows;
+  rows[catId].push({ id: newId(), name: '', value: '' });
+  renderAll();
+  // Focus the newly added name input
+  setTimeout(() => {
+    const lastRow = document.querySelector(`#catrows-${type}-${catId} .row:last-child .row-name`);
+    if (lastRow) lastRow.focus();
+  }, 50);
+}
+
+function updateRow(type, catId, id, field, val) {
+  const rows = type === 'asset' ? assetRows : liabRows;
+  const row = rows[catId].find(r => r.id === id);
+  if (row) { row[field] = val; updateSummary(); }
+}
+
+function deleteRow(type, catId, id) {
+  const rows = type === 'asset' ? assetRows : liabRows;
+  const obj = type === 'asset' ? assetRows : liabRows;
+  obj[catId] = obj[catId].filter(r => r.id !== id);
+  const el = document.getElementById(`row-${id}`);
+  if (el) { el.style.opacity='0'; el.style.transform='translateX(-8px)'; setTimeout(()=>renderAll(), 200); }
+}
+
+// ─── CALCULATIONS ─────────────────────────────────────────────────────────────
+function catTotal(rows, catId) {
+  return (rows[catId]||[]).reduce((s,r) => s + (parseFloat(r.value)||0), 0);
+}
+function grandTotal(cats, rows) {
+  return cats.reduce((s,c) => s + catTotal(rows, c.id), 0);
+}
+
+function updateSummary() {
+  const A = grandTotal(ASSET_CATS, assetRows);
+  const L = grandTotal(LIAB_CATS, liabRows);
+  const N = A - L;
+
+  document.getElementById('totalAssetsHeader').textContent = fmt(A);
+  document.getElementById('totalLiabilitiesHeader').textContent = fmt(L);
+  document.getElementById('bannerAssets').textContent = fmt(A);
+  document.getElementById('bannerLiabilities').textContent = fmt(L);
+  const nwEl = document.getElementById('bannerNetWorth');
+  nwEl.textContent = fmt(N);
+  nwEl.className = 'summary-value ' + (N >= 0 ? 'positive' : 'negative');
+
+  // Ratio bar
+  const total = A + L;
+  const pct = total > 0 ? Math.round((A / total) * 100) : 0;
+  document.getElementById('ratioFill').style.width = pct + '%';
+  if (total > 0) {
+    const ratio = L > 0 ? (A/L).toFixed(2) : '∞';
+    document.getElementById('ratioPct').textContent = `Assets ${pct}%  ·  Ratio ${ratio}:1`;
+  } else {
+    document.getElementById('ratioPct').textContent = '— : —';
+  }
+
+  // Donut
+  updateDonut(A, L);
+  updateBreakdowns(A, L);
+  updateMilestones(N);
+  updateCategorySubtotals();
+}
+
+function updateCategorySubtotals() {
+  ASSET_CATS.forEach(c => {
+    const t = catTotal(assetRows, c.id);
+    // subtotals are re-rendered, so no update needed here
+  });
+}
+
+function updateDonut(A, L) {
+  const circ = 2 * Math.PI * 60; // ~377
+  const total = A + L;
+  if (total === 0) {
+    document.getElementById('donutAssets').setAttribute('stroke-dasharray', `0 ${circ}`);
+    document.getElementById('donutLiabilities').setAttribute('stroke-dasharray', `0 ${circ}`);
+    document.getElementById('donutPct').textContent = '—';
+    return;
+  }
+  const aPct = A / total;
+  const lPct = L / total;
+  const aLen = aPct * circ;
+  const lLen = lPct * circ;
+  document.getElementById('donutAssets').setAttribute('stroke-dasharray', `${aLen} ${circ - aLen}`);
+  document.getElementById('donutAssets').setAttribute('stroke-dashoffset', '0');
+  document.getElementById('donutLiabilities').setAttribute('stroke-dasharray', `${lLen} ${circ - lLen}`);
+  document.getElementById('donutLiabilities').setAttribute('stroke-dashoffset', `${-(aLen)}`);
+  document.getElementById('donutPct').textContent = Math.round(aPct * 100) + '%';
+}
+
+function updateBreakdowns(totalA, totalL) {
+  const ab = document.getElementById('assetBreakdown');
+  const lb = document.getElementById('liabilityBreakdown');
+  ab.innerHTML = '';
+  lb.innerHTML = '';
+
+  const buildBar = (cat, val, total, container) => {
+    if (val === 0) return;
+    const pct = total > 0 ? Math.round(val / total * 100) : 0;
+    const div = document.createElement('div');
+    div.className = 'breakdown-item';
+    div.innerHTML = `
+      <div class="breakdown-row">
+        <span>${cat.label}</span>
+        <span>${fmt(val)} <span class="breakdown-pct">${pct}%</span></span>
+      </div>
+      <div class="breakdown-track">
+        <div class="breakdown-fill" style="width:${pct}%;background:${cat.color}"></div>
+      </div>`;
+    container.appendChild(div);
+  };
+
+  ASSET_CATS.forEach(c => buildBar(c, catTotal(assetRows, c.id), totalA, ab));
+  LIAB_CATS.forEach(c => buildBar(c, catTotal(liabRows, c.id), totalL, lb));
+
+  if (!ab.innerHTML) ab.innerHTML = '<div style="color:var(--gray-mid);font-size:11px;text-align:center;padding:20px 0">No assets entered yet</div>';
+  if (!lb.innerHTML) lb.innerHTML = '<div style="color:var(--gray-mid);font-size:11px;text-align:center;padding:20px 0">No liabilities entered yet</div>';
+}
+
+const MILESTONES = [
+  { icon: '🌱', name: 'First $10K',   val: 10000 },
+  { icon: '💰', name: '$100K',        val: 100000 },
+  { icon: '🏆', name: 'Half Million', val: 500000 },
+  { icon: '⭐', name: 'Millionaire',  val: 1000000 },
+  { icon: '💎', name: 'Multi-Millionaire', val: 5000000 },
+];
+
+function updateMilestones(nw) {
+  const grid = document.getElementById('milestonesGrid');
+  grid.innerHTML = '';
+  MILESTONES.forEach(m => {
+    const achieved = nw >= m.val;
+    const div = document.createElement('div');
+    div.className = 'milestone-item' + (achieved ? ' achieved' : '');
+    div.innerHTML = `
+      <div class="milestone-icon">${m.icon}</div>
+      <div class="milestone-name">${m.name}</div>
+      <div class="milestone-val">${fmtShort(m.val)}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+// ─── PDF EXPORT ───────────────────────────────────────────────────────────────
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, H = 297;
+  const gold = [201, 168, 76];
+  const black = [10, 10, 10];
+  const white = [255, 255, 255];
+  const gray  = [90, 85, 80];
+  const offwhite = [248, 246, 241];
+
+  const A = grandTotal(ASSET_CATS, assetRows);
+  const L = grandTotal(LIAB_CATS, liabRows);
+  const N = A - L;
+  const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+  // ── Cover Header ──
+  doc.setFillColor(...black);
+  doc.rect(0, 0, W, 42, 'F');
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.5);
+  doc.line(0, 42, W, 42);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(...white);
+  doc.text('WEALTHLEDGER', 14, 18);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(...gold);
+  doc.text('PERSONAL NET WORTH REPORT', 14, 25);
+
+  doc.setTextColor(140, 130, 120);
+  doc.setFontSize(8);
+  doc.text(`Report Generated: ${today}`, 14, 33);
+  doc.text('CONFIDENTIAL — FOR PERSONAL USE ONLY', W-14, 33, { align:'right' });
+
+  // ── Summary Bar ──
+  let y = 52;
+  doc.setFillColor(...offwhite);
+  doc.roundedRect(14, y, W-28, 28, 2, 2, 'F');
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(14, y, W-28, 28, 2, 2, 'S');
+
+  const cols = [{ label:'TOTAL ASSETS', val: fmt(A), col: [45,122,79] },
+                { label:'TOTAL LIABILITIES', val: fmt(L), col: [139,32,32] },
+                { label:'NET WORTH', val: fmt(N), col: N >= 0 ? [45,122,79] : [139,32,32] }];
+  const colW = (W-28)/3;
+  cols.forEach((c,i) => {
+    const cx = 14 + colW*i + colW/2;
+    if (i > 0) {
+      doc.setDrawColor(...gold);
+      doc.setLineWidth(0.2);
+      doc.line(14+colW*i, y+4, 14+colW*i, y+24);
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...gray);
+    doc.text(c.label, cx, y+9, {align:'center'});
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(...c.col);
+    doc.text(c.val, cx, y+21, {align:'center'});
+  });
+
+  y += 38;
+
+  // ── Assets Table ──
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...black);
+  doc.text('ASSETS', 14, y);
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.4);
+  doc.line(14, y+2, 50, y+2);
+  y += 8;
+
+  const assetTableData = [];
+  ASSET_CATS.forEach(cat => {
+    const rows = assetRows[cat.id].filter(r => parseFloat(r.value) > 0 || r.name);
+    if (rows.length === 0) return;
+    assetTableData.push([{ content: cat.label.toUpperCase(), colSpan: 2, styles: { fillColor: [240,236,228], textColor: gray, fontStyle:'bold', fontSize:8 } }]);
+    rows.forEach(r => {
+      assetTableData.push([r.name || '(Untitled)', fmt(parseFloat(r.value)||0)]);
+    });
+    assetTableData.push([{ content:'Subtotal', styles:{fontStyle:'bold',textColor:gray} }, { content: fmt(catTotal(assetRows, cat.id)), styles:{fontStyle:'bold',textColor:[154,122,46]} }]);
+  });
+
+  doc.autoTable({
+    startY: y,
+    body: assetTableData,
+    columnStyles: { 0: { cellWidth: 130 }, 1: { cellWidth: 52, halign: 'right' } },
+    styles: { fontSize: 9, cellPadding: 3, lineColor: [232,228,220], lineWidth: 0.2 },
+    theme: 'grid',
+    margin: { left: 14, right: 14 },
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  // ── Liabilities Table ──
+  if (y > H - 60) { doc.addPage(); y = 20; }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(...black);
+  doc.text('LIABILITIES', 14, y);
+  doc.setDrawColor(...gold);
+  doc.setLineWidth(0.4);
+  doc.line(14, y+2, 60, y+2);
+  y += 8;
+
+  const liabTableData = [];
+  LIAB_CATS.forEach(cat => {
+    const rows = liabRows[cat.id].filter(r => parseFloat(r.value) > 0 || r.name);
+    if (rows.length === 0) return;
+    liabTableData.push([{ content: cat.label.toUpperCase(), colSpan: 2, styles: { fillColor: [245,235,235], textColor: gray, fontStyle:'bold', fontSize:8 } }]);
+    rows.forEach(r => {
+      liabTableData.push([r.name || '(Untitled)', fmt(parseFloat(r.value)||0)]);
+    });
+    liabTableData.push([{ content:'Subtotal', styles:{fontStyle:'bold',textColor:gray} }, { content: fmt(catTotal(liabRows, cat.id)), styles:{fontStyle:'bold',textColor:[139,32,32]} }]);
+  });
+
+  if (liabTableData.length > 0) {
+    doc.autoTable({
+      startY: y,
+      body: liabTableData,
+      columnStyles: { 0: { cellWidth: 130 }, 1: { cellWidth: 52, halign: 'right' } },
+      styles: { fontSize: 9, cellPadding: 3, lineColor: [232,228,220], lineWidth: 0.2 },
+      theme: 'grid',
+      margin: { left: 14, right: 14 },
+    });
+    y = doc.lastAutoTable.finalY + 10;
+  }
+
+  // ── Final Summary Box ──
+  if (y > H - 50) { doc.addPage(); y = 20; }
+  doc.setFillColor(...black);
+  doc.roundedRect(14, y, W-28, 26, 2, 2, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...gold);
+  doc.text('TOTAL ASSETS', 30, y+9, {align:'center'});
+  doc.text('TOTAL LIABILITIES', W/2, y+9, {align:'center'});
+  doc.text('NET WORTH', W-30, y+9, {align:'center'});
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(226,201,126);
+  doc.text(fmt(A), 30, y+20, {align:'center'});
+  doc.setTextColor(220,112,112);
+  doc.text(fmt(L), W/2, y+20, {align:'center'});
+  doc.setTextColor(N>=0 ? 226 : 220, N>=0 ? 201 : 112, N>=0 ? 126 : 112);
+  doc.text(fmt(N), W-30, y+20, {align:'center'});
+
+  // ── Page footer ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFillColor(...black);
+    doc.rect(0, H-10, W, 10, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...gray);
+    doc.text('WealthLedger · Confidential Financial Report', 14, H-3.5);
+    doc.text(`Page ${p} of ${totalPages}`, W-14, H-3.5, {align:'right'});
+  }
+
+  doc.save(`NetWorth-Report-${new Date().toISOString().slice(0,10)}.pdf`);
+  showToast('✓  PDF report downloaded');
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (isNaN(n)) return '$0';
+  return new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits:0, maximumFractionDigits:0 }).format(n);
+}
+function fmtShort(n) {
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(n%1e6===0?0:1) + 'M';
+  if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+  return fmt(n);
+}
+function esc(s) { return (s||'').replace(/"/g,'&quot;'); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function clearAll() {
+  ASSET_CATS.forEach(c => assetRows[c.id] = []);
+  LIAB_CATS.forEach(c => liabRows[c.id] = []);
+  renderAll();
+  showToast('All data cleared');
+}
+
+function loadSample() {
+  clearAll();
+  assetRows.cash    = [{id:newId(),name:'Checking Account',value:'12500'},{id:newId(),name:'Savings Account',value:'48000'},{id:newId(),name:'Money Market',value:'15000'}];
+  assetRows.invest  = [{id:newId(),name:'Stock Portfolio',value:'185000'},{id:newId(),name:'ETF Holdings',value:'62000'},{id:newId(),name:'Crypto',value:'8400'}];
+  assetRows.realty  = [{id:newId(),name:'Primary Residence',value:'450000'},{id:newId(),name:'Rental Property',value:'280000'}];
+  assetRows.retire  = [{id:newId(),name:'401(k)',value:'124000'},{id:newId(),name:'Roth IRA',value:'38000'}];
+  assetRows.vehicles= [{id:newId(),name:'2022 Tesla Model 3',value:'34000'},{id:newId(),name:'2018 Honda CRV',value:'14000'}];
+  assetRows.personal= [{id:newId(),name:'Jewelry & Watches',value:'22000'},{id:newId(),name:'Electronics',value:'5000'}];
+
+  liabRows.mortgage = [{id:newId(),name:'Primary Mortgage',value:'320000'},{id:newId(),name:'Rental Mortgage',value:'210000'}];
+  liabRows.auto     = [{id:newId(),name:'Tesla Loan',value:'18000'}];
+  liabRows.student  = [{id:newId(),name:'Student Loan Balance',value:'24000'}];
+  liabRows.cards    = [{id:newId(),name:'Visa Credit Card',value:'3400'},{id:newId(),name:'Amex Credit Card',value:'1200'}];
+
+  renderAll();
+  showToast('Sample data loaded');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', {
+  weekday:'long', year:'numeric', month:'long', day:'numeric'
+});
+
+renderAll();
+</script>
+</body>
+</html>
